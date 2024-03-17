@@ -21,6 +21,7 @@ public class Server {
             System.out.println("Server start");
             while (!serverSocket.isClosed()) {
                 Socket socket = serverSocket.accept();
+
                 ClientHandler clientHandler = new ClientHandler(socket);
 
                 System.out.println(clientHandler.getClientUsername() + " has connected");
