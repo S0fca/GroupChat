@@ -9,6 +9,7 @@ public class ClientHandler implements Runnable {
     private BufferedReader bufferedReader;
     private BufferedWriter bufferedWriter;
     private String clientUsername;
+    private boolean nameTaken = false;
 
     public ClientHandler(Socket socket) {
         try {
@@ -16,14 +17,13 @@ public class ClientHandler implements Runnable {
             bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             checkNameAvailability(bufferedWriter, bufferedReader);
-            boolean add = true;
             for (ClientHandler clientHandler : clientHandlers) {
                 if (clientHandler.getClientUsername().equals(clientUsername)) {
-                    add = false;
+                    nameTaken = true;
                     break;
                 }
             }
-            if (add) {
+            if (!nameTaken) {
                 clientHandlers.add(this);
                 broadcastMessage("SERVER: " + clientUsername + " has entered the chat!");
             }
@@ -40,15 +40,13 @@ public class ClientHandler implements Runnable {
                     bufferedWriter.write("NameTaken");
                     bufferedWriter.newLine();
                     bufferedWriter.flush();
-                    closeEverything();
-                    break;
+                    return;
                 }
             }
             bufferedWriter.write("NameAvailable");
             bufferedWriter.newLine();
             bufferedWriter.flush();
         } catch (IOException e) {
-            System.out.println(3);
             closeEverything();
         }
     }
@@ -67,19 +65,11 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public void removeClientHandler() {
-        for (ClientHandler clientHandler : clientHandlers) {
-            if (!clientHandler.getClientUsername().equals(clientUsername) && clientHandler == this) {
-                clientHandlers.remove(this);
-                broadcastMessage("SERVER: " + clientUsername + " has left the chat\n");
-                break;
-            }
-        }
-        clientHandlers.remove(this);
-    }
-
     private void closeEverything() {
-        removeClientHandler();
+        clientHandlers.remove(this);
+        if (!nameTaken) {
+            broadcastMessage("SERVER: " + clientUsername + " has left the chat");
+        }
         try {
             if (bufferedWriter != null) bufferedWriter.close();
             if (bufferedReader != null) bufferedReader.close();
@@ -93,7 +83,6 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         String messageFromClient;
-
         while (socket.isConnected()) {
             try {
                 messageFromClient = bufferedReader.readLine();

@@ -28,7 +28,7 @@ public class Client {
         Socket socket = null;
         try {
             socket = new Socket("localhost", 1234);
-            System.out.println("Connected ig");
+            System.out.println("Connected");
         } catch (ConnectException e) {
             System.out.println("Server is closed :(");
             System.exit(0);
