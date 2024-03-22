@@ -69,12 +69,13 @@ public class ClientHandler implements Runnable {
 
     public void removeClientHandler() {
         for (ClientHandler clientHandler : clientHandlers) {
-            if (clientHandler.getClientUsername().equals(clientUsername) && clientHandler != this) {
+            if (!clientHandler.getClientUsername().equals(clientUsername) && clientHandler == this) {
                 clientHandlers.remove(this);
-                return;
+                broadcastMessage("SERVER: " + clientUsername + " has left the chat\n");
+                break;
             }
         }
-        broadcastMessage("SERVER: " + clientUsername + " has left the chat\n");
+        clientHandlers.remove(this);
     }
 
     private void closeEverything() {
