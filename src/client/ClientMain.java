@@ -10,7 +10,7 @@ public class ClientMain {
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter your username for the group chat: ");
-        String username = scanner.nextLine();
+        String username = scanner.nextLine().strip();
         Socket socket = null;
         try {
             socket = new Socket("localhost", 1234);

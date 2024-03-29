@@ -36,17 +36,26 @@ public class ChatFrame extends JFrame {
         this.setVisible(true);
         this.add(addChatPanel());
 
-        this.setPreferredSize(new Dimension(300, 200));
         this.pack();
     }
 
     private JPanel addChatPanel() {
         panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.white);
+        JPanel textPanel = new JPanel(new BorderLayout());
+        textPanel.add(text,BorderLayout.LINE_START);
         text.setEditable(false);
-        text.setBorder(BorderFactory.createLineBorder(Color.white, 5));
-        panel.add(text, BorderLayout.PAGE_START);
+        text.setBorder(BorderFactory.createLineBorder(Color.white,5));
         text.setText("Welcome to the group chat!\n");
+
+        textPanel.setBackground(Color.white);
+        textPanel.setBorder(BorderFactory.createLineBorder(Color.white,5));
+
+        JScrollPane scrollBar = new JScrollPane(textPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollBar.setPreferredSize(new Dimension(500,300));
+        panel.add(scrollBar, BorderLayout.PAGE_START);
         panel.add(textField, BorderLayout.PAGE_END);
+        textField.setBorder(BorderFactory.createLineBorder(Color.lightGray,2));
         textField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
