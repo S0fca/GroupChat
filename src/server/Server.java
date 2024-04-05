@@ -1,5 +1,7 @@
 package server;
 
+import server.commands.Commands;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -7,6 +9,8 @@ import java.net.Socket;
 public class Server {
 
     private final ServerSocket serverSocket;
+    static Console console = new Console();
+
 
     public Server(ServerSocket serverSocket) {
         this.serverSocket = serverSocket;
@@ -18,9 +22,17 @@ public class Server {
         server.startServer();
     }
 
+    private static void startConsole() {
+        new Thread(() -> {
+            console.start();
+        }).start();
+    }
+
     public void startServer() {
+        System.out.println("Server start");
+        startConsole();
+        System.out.println("Console started\nWrite \"commands\" to se which commands you can use");
         try {
-            System.out.println("Server start");
             while (!serverSocket.isClosed()) {
                 Socket socket = serverSocket.accept();
 

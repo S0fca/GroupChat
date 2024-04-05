@@ -49,13 +49,13 @@ public class ChatFrame {
     public void setChatPanel() {
         client.isNameAvailable();
 
-        writeBoldText("Welcome to the group chat!\n");
+        writeInBoldText("Welcome to the group chat!\n");
         textField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
                 char keyTyped = e.getKeyChar();
                 if (keyTyped == KeyEvent.VK_ENTER) {
-                    sendMessage(textField.getText());
+                    sendOutMessage(textField.getText());
                     textField.setText("");
                 }
             }
@@ -90,14 +90,14 @@ public class ChatFrame {
     public void writeInMessage(String message) {
         String[] parts = message.split(": ");
         if (parts.length == 1) {
-            writeText(message);
+            writeInText(message);
         } else {
-            writeBoldText(parts[0] + ": ");
-            writeText(parts[1]);
+            writeInBoldText(parts[0] + ": ");
+            writeInText(parts[1]);
         }
     }
 
-    private void writeText(String text) {
+    private void writeInText(String text) {
         try {
             doc.insertString(doc.getLength(), text + '\n', null);
         } catch (BadLocationException e) {
@@ -105,7 +105,7 @@ public class ChatFrame {
         }
     }
 
-    private void writeBoldText(String text) {
+    private void writeInBoldText(String text) {
         Style style = chat.addStyle("Style", null);
         StyleConstants.setBold(style, true);
         try {
@@ -115,7 +115,7 @@ public class ChatFrame {
         }
     }
 
-    public void sendMessage(String messageToSend) {
+    public void sendOutMessage(String messageToSend) {
         try {
             doc.insertString(doc.getLength(), messageToSend + '\n', null);
         } catch (BadLocationException e) {
@@ -124,7 +124,7 @@ public class ChatFrame {
         client.sendMessages(messageToSend);
     }
 
-    public void nameTaken() {
+    public void nameTakenFrame() {
         frame.setVisible(false);
         JFrame nameTakenFrame = new JFrame("Name taken");
         nameTakenFrame.setLocationRelativeTo(null);
@@ -139,7 +139,7 @@ public class ChatFrame {
         nameTakenFrame.pack();
     }
 
-    public void serverError(String message) {
+    public void serverErrorFrame(String message) {
         JFrame errorFrame = new JFrame(message);
         errorFrame.setLocationRelativeTo(null);
         errorFrame.setResizable(false);

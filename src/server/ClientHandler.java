@@ -12,6 +12,8 @@ public class ClientHandler implements Runnable {
     private BufferedWriter bufferedWriter;
     private String clientUsername;
     private boolean nameTaken = false;
+    private boolean notKicked = true;
+
 
     public ClientHandler(Socket socket) {
         try {
@@ -50,10 +52,6 @@ public class ClientHandler implements Runnable {
             bufferedWriter.flush();
 
             System.out.println(clientUsername + " has connected");
-            System.out.println("Clients: ");
-            for (ClientHandler clientHandler1 : ClientHandler.clientHandlers) {
-                System.out.println(clientHandler1.getClientUsername());
-            }
         } catch (IOException e) {
             closeEverything();
         }
@@ -90,9 +88,24 @@ public class ClientHandler implements Runnable {
 
     private void closeEverything() {
         clientHandlers.remove(this);
-        if (!nameTaken) {
+        if (!nameTaken && notKicked) {
             broadcastMessage("SERVER: " + clientUsername + " has left the chat");
         }
+        try {
+            if (bufferedWriter != null) bufferedWriter.close();
+            if (bufferedReader != null) bufferedReader.close();
+            if (socket != null) socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void kickPlayer() {
+        notKicked = false;
+        privateMessage("You've been kicked out", clientUsername, clientUsername);
+        broadcastMessage("SERVER: " + clientUsername + " has been kicked out");
+
+        clientHandlers.remove(this);
         try {
             if (bufferedWriter != null) bufferedWriter.close();
             if (bufferedReader != null) bufferedReader.close();

@@ -27,17 +27,13 @@ public class Client {
         this.username = String.valueOf(username.charAt(0)).toUpperCase() + username.substring(1);
     }
 
-    public Client() {
-    }
-
-
     public void isNameAvailable() {
         new Thread(() -> {
             String message;
             try {
                 message = bufferedReader.readLine();
                 if (message.equals("NameTaken")) {
-                    chatFrame.nameTaken();
+                    chatFrame.nameTakenFrame();
                     Thread.currentThread().interrupt();
                 } else {
                     chatFrame.writeInMessage(username + " is available :)");
@@ -95,5 +91,8 @@ public class Client {
 
     public void sendFrame(ChatFrame frame) {
         chatFrame = frame;
+    }
+
+    public Client() {
     }
 }

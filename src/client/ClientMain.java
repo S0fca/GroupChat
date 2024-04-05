@@ -16,10 +16,10 @@ public class ClientMain {
             socket = new Socket("localhost", 1234);
         } catch (ConnectException e) {
             serverRunning = false;
-            frame.serverError("Server closed");
+            frame.serverErrorFrame("Server closed");
         } catch (SocketException e) {
             serverRunning = false;
-            frame.serverError("Network is unreachable");
+            frame.serverErrorFrame("Network is unreachable");
         }
 
         if (serverRunning) {
