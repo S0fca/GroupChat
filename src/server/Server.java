@@ -26,13 +26,6 @@ public class Server {
 
                 ClientHandler clientHandler = new ClientHandler(socket);
 
-                System.out.println(clientHandler.getClientUsername() + " has connected");
-
-                System.out.println("Clients: ");
-                for (ClientHandler clientHandler1 : ClientHandler.clientHandlers){
-                    System.out.println(clientHandler1.getClientUsername());
-                }
-
                 Thread thread = new Thread(clientHandler);
                 thread.start();
             }

@@ -16,11 +16,9 @@ public class ClientMain {
             socket = new Socket("localhost", 1234);
         } catch (ConnectException e) {
             serverRunning = false;
-            System.out.println("Server closed");
             frame.serverError("Server closed");
         } catch (SocketException e) {
             serverRunning = false;
-            System.out.println("Network is unreachable");
             frame.serverError("Network is unreachable");
         }
 

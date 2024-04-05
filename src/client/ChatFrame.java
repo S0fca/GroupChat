@@ -1,16 +1,22 @@
 package client;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 public class ChatFrame {
 
-    JFrame frame;
-    final JTextArea chat = new JTextArea();
-    final JTextField textField = new JTextField();
+    private JFrame frame;
+    private final JTextPane chat = new JTextPane();
+    private final JTextField textField = new JTextField();
     private Client client = new Client();
+    private final StyledDocument doc = chat.getStyledDocument();
+
 
     public void setFrame() {
 
@@ -43,7 +49,7 @@ public class ChatFrame {
     public void setChatPanel() {
         client.isNameAvailable();
 
-        chat.setText("Welcome to the group chat!\n");
+        writeBoldText("Welcome to the group chat!\n");
         textField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -74,11 +80,39 @@ public class ChatFrame {
     }
 
     public void writeInMessage(String message) {
-        chat.append(message + '\n');
+        String[] parts = message.split(": ");
+        if (parts.length == 1) {
+            writeText(message);
+        } else {
+            writeBoldText(parts[0] + ": ");
+            writeText(parts[1]);
+        }
+    }
+
+    private void writeText(String text) {
+        try {
+            doc.insertString(doc.getLength(), text + '\n', null);
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void writeBoldText(String text) {
+        Style style = chat.addStyle("Style", null);
+        StyleConstants.setBold(style, true);
+        try {
+            doc.insertString(doc.getLength(), text, style);
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
     }
 
     public void sendMessage(String messageToSend) {
-        chat.append(messageToSend + '\n');
+        try {
+            doc.insertString(doc.getLength(), messageToSend + '\n', null);
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
+        }
         client.sendMessages(messageToSend);
     }
 

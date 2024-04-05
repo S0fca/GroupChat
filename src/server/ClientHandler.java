@@ -48,6 +48,12 @@ public class ClientHandler implements Runnable {
             bufferedWriter.write("NameAvailable");
             bufferedWriter.newLine();
             bufferedWriter.flush();
+
+            System.out.println(clientUsername + " has connected");
+            System.out.println("Clients: ");
+            for (ClientHandler clientHandler1 : ClientHandler.clientHandlers){
+                System.out.println(clientHandler1.getClientUsername());
+            }
         } catch (IOException e) {
             closeEverything();
         }
