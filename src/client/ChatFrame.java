@@ -64,17 +64,25 @@ public class ChatFrame {
 
     public String getName() {
         TextField nameInput = new TextField();
+        boolean nameIncorrect;
 
         String username;
         do {
+            nameIncorrect = false;
             JOptionPane.showMessageDialog(null, nameInput, "Enter your username for the group chat", JOptionPane.PLAIN_MESSAGE);
 
             username = nameInput.getText().strip();
 
             if (username.length() < 2) {
+                nameIncorrect = true;
                 JOptionPane.showMessageDialog(null, "Name must be at least 2 characters long", "Invalid Username", JOptionPane.ERROR_MESSAGE);
             }
-        } while (username.strip().length() < 2);
+            if (username.contains("\s")) {
+                nameIncorrect = true;
+                JOptionPane.showMessageDialog(null, "Name cannot include whitespace", "Invalid Username", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } while (nameIncorrect);
 
         return username;
     }

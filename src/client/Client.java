@@ -40,7 +40,7 @@ public class Client {
                     chatFrame.nameTaken();
                     Thread.currentThread().interrupt();
                 } else {
-                    chatFrame.writeInMessage("Name is available :)");
+                    chatFrame.writeInMessage(username + " is available :)");
                     Thread.currentThread().interrupt();
                 }
             } catch (IOException e) {

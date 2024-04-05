@@ -51,7 +51,7 @@ public class ClientHandler implements Runnable {
 
             System.out.println(clientUsername + " has connected");
             System.out.println("Clients: ");
-            for (ClientHandler clientHandler1 : ClientHandler.clientHandlers){
+            for (ClientHandler clientHandler1 : ClientHandler.clientHandlers) {
                 System.out.println(clientHandler1.getClientUsername());
             }
         } catch (IOException e) {
@@ -66,6 +66,21 @@ public class ClientHandler implements Runnable {
                     clientHandler.bufferedWriter.write(messageToSend);
                     clientHandler.bufferedWriter.newLine();
                     clientHandler.bufferedWriter.flush();
+                }
+            } catch (IOException e) {
+                closeEverything();
+            }
+        }
+    }
+
+    private void privateMessage(String messageToSend, String sentToUsername, String username) {
+        for (ClientHandler clientHandler : clientHandlers) {
+            try {
+                if (clientHandler.clientUsername.equalsIgnoreCase(sentToUsername)) {
+                    clientHandler.bufferedWriter.write(username + " private message: " + messageToSend);
+                    clientHandler.bufferedWriter.newLine();
+                    clientHandler.bufferedWriter.flush();
+                    break;
                 }
             } catch (IOException e) {
                 closeEverything();
@@ -94,7 +109,14 @@ public class ClientHandler implements Runnable {
         while (socket.isConnected()) {
             try {
                 messageFromClient = bufferedReader.readLine();
-                broadcastMessage(messageFromClient);
+                String[] parts = messageFromClient.split(": ", 2);
+
+                if (parts[1].charAt(0) == '@') {
+                    privateMessage(parts[1].substring(parts[1].indexOf(' ') + 1), parts[1].split(" ")[0].substring(1), parts[0]);
+                } else {
+                    broadcastMessage(messageFromClient);
+                }
+
             } catch (IOException e) {
                 closeEverything();
                 break;
