@@ -14,7 +14,7 @@ public class Client {
     public Client(Socket socket, String username) {
         try {
             this.socket = socket;
-            this.username = username;
+            setUsername(username);
             this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             sendUsername();
@@ -23,16 +23,24 @@ public class Client {
         }
     }
 
+    public void setUsername(String username) {
+        this.username = String.valueOf(username.charAt(0)).toUpperCase() + username.substring(1);
+    }
+
+    public Client() {
+    }
+
+
     public void isNameAvailable() {
         new Thread(() -> {
             String message;
             try {
                 message = bufferedReader.readLine();
                 if (message.equals("NameTaken")) {
-                    System.out.println("Name is taken! :(");
-                    System.exit(0);
+                    chatFrame.nameTaken();
+                    Thread.currentThread().interrupt();
                 } else {
-                    System.out.println("Name is available :)");
+                    chatFrame.writeInMessage("Name is available :)");
                     Thread.currentThread().interrupt();
                 }
             } catch (IOException e) {
@@ -40,7 +48,6 @@ public class Client {
             }
         }).start();
     }
-
 
     public void sendMessages(String messageToSend) {
         try {
@@ -68,7 +75,6 @@ public class Client {
             while (socket.isConnected()) {
                 try {
                     message = bufferedReader.readLine();
-                    System.out.println(message);
                     chatFrame.writeInMessage(message);
                 } catch (IOException e) {
                     closeEverything(socket, bufferedReader, bufferedWriter);

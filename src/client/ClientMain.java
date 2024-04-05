@@ -3,26 +3,38 @@ package client;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
-import java.util.Scanner;
+import java.net.SocketException;
 
 public class ClientMain {
 
     public static void main(String[] args) throws IOException {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter your username for the group chat: ");
-        String username = scanner.nextLine().strip();
+        boolean serverRunning = true;
+        ChatFrame frame = new ChatFrame();
+
         Socket socket = null;
         try {
             socket = new Socket("localhost", 1234);
         } catch (ConnectException e) {
-            System.out.println("Server is closed :(");
-            System.exit(0);
+            serverRunning = false;
+            System.out.println("Server closed");
+            frame.serverError("Server closed");
+        } catch (SocketException e) {
+            serverRunning = false;
+            System.out.println("Network is unreachable");
+            frame.serverError("Network is unreachable");
         }
-        Client client = new Client(socket, username);
-        ChatFrame frame = new ChatFrame(client);
-        client.sendFrame(frame);
 
-        client.isNameAvailable();
-        client.listenForMessage();
+        if (serverRunning) {
+            frame.setFrame();
+            String username = frame.getName();
+
+            Client client = new Client(socket, username);
+            frame.setClient(client);
+
+            client.sendFrame(frame);
+
+            frame.setChatPanel();
+            client.listenForMessage();
+        }
     }
 }

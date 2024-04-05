@@ -5,57 +5,45 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-public class ChatFrame extends JFrame {
+public class ChatFrame {
 
-    private JPanel panel;
-    final JTextArea text = new JTextArea();
+    JFrame frame;
+    final JTextArea chat = new JTextArea();
     final JTextField textField = new JTextField();
-    private Client client;
+    private Client client = new Client();
 
-    public static void main(String[] args) {
-        new ChatFrame();
-    }
+    public void setFrame() {
 
-    public ChatFrame() {
-        this.setTitle("GroupChat");
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setLocationRelativeTo(null);
-        this.setResizable(false);
-        this.setVisible(true);
-        this.add(addChatPanel());
+        frame = new JFrame("GroupChat");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+        frame.setResizable(false);
+        frame.setVisible(true);
 
-        this.pack();
-    }
-
-    public ChatFrame(Client client) {
-        this.client = client;
-        this.setTitle("GroupChat");
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setLocationRelativeTo(null);
-        this.setResizable(false);
-        this.setVisible(true);
-        this.add(addChatPanel());
-
-        this.pack();
-    }
-
-    private JPanel addChatPanel() {
-        panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.white);
         JPanel textPanel = new JPanel(new BorderLayout());
-        textPanel.add(text,BorderLayout.LINE_START);
-        text.setEditable(false);
-        text.setBorder(BorderFactory.createLineBorder(Color.white,5));
-        text.setText("Welcome to the group chat!\n");
+        textPanel.add(chat, BorderLayout.LINE_START);
+        chat.setEditable(false);
+        chat.setBorder(BorderFactory.createLineBorder(Color.white, 5));
 
         textPanel.setBackground(Color.white);
-        textPanel.setBorder(BorderFactory.createLineBorder(Color.white,5));
+        textPanel.setBorder(BorderFactory.createLineBorder(Color.white, 5));
 
         JScrollPane scrollBar = new JScrollPane(textPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollBar.setPreferredSize(new Dimension(500,300));
+        scrollBar.setPreferredSize(new Dimension(500, 300));
         panel.add(scrollBar, BorderLayout.PAGE_START);
         panel.add(textField, BorderLayout.PAGE_END);
-        textField.setBorder(BorderFactory.createLineBorder(Color.lightGray,2));
+        textField.setBorder(BorderFactory.createLineBorder(Color.lightGray, 2));
+
+        frame.add(panel);
+        frame.pack();
+    }
+
+    public void setChatPanel() {
+        client.isNameAvailable();
+
+        chat.setText("Welcome to the group chat!\n");
         textField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -66,15 +54,64 @@ public class ChatFrame extends JFrame {
                 }
             }
         });
-        return panel;
+    }
+
+    public String getName() {
+        TextField nameInput = new TextField();
+
+        String username;
+        do {
+            JOptionPane.showMessageDialog(null, nameInput, "Enter your username for the group chat", JOptionPane.PLAIN_MESSAGE);
+
+            username = nameInput.getText().strip();
+
+            if (username.length() < 2) {
+                JOptionPane.showMessageDialog(null, "Name must be at least 2 characters long", "Invalid Username", JOptionPane.ERROR_MESSAGE);
+            }
+        } while (username.strip().length() < 2);
+
+        return username;
     }
 
     public void writeInMessage(String message) {
-        text.append(message + '\n');
+        chat.append(message + '\n');
     }
 
     public void sendMessage(String messageToSend) {
-        text.append(messageToSend + '\n');
+        chat.append(messageToSend + '\n');
         client.sendMessages(messageToSend);
+    }
+
+    public void nameTaken() {
+        frame.setVisible(false);
+        JFrame nameTakenFrame = new JFrame("Name taken");
+        nameTakenFrame.setLocationRelativeTo(null);
+        nameTakenFrame.setResizable(false);
+        nameTakenFrame.setVisible(true);
+
+        JLabel label = new JLabel();
+        label.setText("Name taken");
+        label.setBorder(BorderFactory.createLineBorder(nameTakenFrame.getBackground(), 16));
+
+        nameTakenFrame.add(label);
+        nameTakenFrame.pack();
+    }
+
+    public void serverError(String message) {
+        JFrame errorFrame = new JFrame(message);
+        errorFrame.setLocationRelativeTo(null);
+        errorFrame.setResizable(false);
+        errorFrame.setVisible(true);
+
+        JLabel label = new JLabel();
+        label.setText(message);
+        label.setBorder(BorderFactory.createLineBorder(errorFrame.getBackground(), 16));
+
+        errorFrame.add(label);
+        errorFrame.pack();
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
     }
 }
