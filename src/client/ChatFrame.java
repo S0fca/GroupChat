@@ -8,6 +8,7 @@ import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.*;
 
 public class ChatFrame {
 
@@ -19,7 +20,6 @@ public class ChatFrame {
 
 
     public void setFrame() {
-
         frame = new JFrame("GroupChat");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
@@ -36,7 +36,7 @@ public class ChatFrame {
         textPanel.setBackground(Color.white);
         textPanel.setBorder(BorderFactory.createLineBorder(Color.white, 5));
 
-        JScrollPane scrollBar = new JScrollPane(textPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane scrollBar = new JScrollPane(textPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollBar.setPreferredSize(new Dimension(500, 300));
         panel.add(scrollBar, BorderLayout.PAGE_START);
         panel.add(textField, BorderLayout.PAGE_END);
@@ -63,27 +63,32 @@ public class ChatFrame {
     }
 
     public String getName() {
+        String usernameFile = "username";
         TextField nameInput = new TextField();
+        nameInput.setText(read(usernameFile));
         boolean nameIncorrect;
 
-        String username;
+        String username = "";
         do {
             nameIncorrect = false;
-            JOptionPane.showMessageDialog(null, nameInput, "Enter your username for the group chat", JOptionPane.PLAIN_MESSAGE);
+            int option = JOptionPane.showConfirmDialog(null, nameInput, "Enter your username for the group chat", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null);
+            if (option == JOptionPane.OK_OPTION) {
 
-            username = nameInput.getText().strip();
+                username = nameInput.getText().strip();
 
-            if (username.length() < 2) {
-                nameIncorrect = true;
-                JOptionPane.showMessageDialog(null, "Name must be at least 2 characters long", "Invalid Username", JOptionPane.ERROR_MESSAGE);
+                if (username.length() < 2) {
+                    nameIncorrect = true;
+                    JOptionPane.showMessageDialog(null, "Name must be at least 2 characters long", "Invalid Username", JOptionPane.ERROR_MESSAGE);
+                }
+                if (username.contains("\s")) {
+                    nameIncorrect = true;
+                    JOptionPane.showMessageDialog(null, "Name cannot include whitespace", "Invalid Username", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                System.exit(0);
             }
-            if (username.contains("\s")) {
-                nameIncorrect = true;
-                JOptionPane.showMessageDialog(null, "Name cannot include whitespace", "Invalid Username", JOptionPane.ERROR_MESSAGE);
-            }
-
         } while (nameIncorrect);
-
+        write(username, usernameFile);
         return username;
     }
 
@@ -115,7 +120,7 @@ public class ChatFrame {
         }
     }
 
-    public void sendOutMessage(String messageToSend) {
+    private void sendOutMessage(String messageToSend) {
         try {
             doc.insertString(doc.getLength(), messageToSend + '\n', null);
         } catch (BadLocationException e) {
@@ -127,6 +132,7 @@ public class ChatFrame {
     public void nameTakenFrame() {
         frame.setVisible(false);
         JFrame nameTakenFrame = new JFrame("Name taken");
+        nameTakenFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         nameTakenFrame.setLocationRelativeTo(null);
         nameTakenFrame.setResizable(false);
         nameTakenFrame.setVisible(true);
@@ -141,6 +147,7 @@ public class ChatFrame {
 
     public void serverErrorFrame(String message) {
         JFrame errorFrame = new JFrame(message);
+        errorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         errorFrame.setLocationRelativeTo(null);
         errorFrame.setResizable(false);
         errorFrame.setVisible(true);
@@ -155,5 +162,73 @@ public class ChatFrame {
 
     public void setClient(Client client) {
         this.client = client;
+    }
+
+    public String[] getIpPort() {
+        String ipFile = "ipAddress";
+        String portFile = "port";
+        boolean incorrectInput;
+        JTextField ipAddressField = new JTextField();
+        ipAddressField.setText(read(ipFile));
+        JTextField portField = new JTextField();
+        portField.setText(read(portFile));
+        portField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if (!Character.isDigit(e.getKeyChar())) {
+                    e.consume();
+                }
+                if (portField.getText().length() > 5) {
+                    e.consume();
+                }
+            }
+        });
+        Object[] message = {
+                "IP Address:", ipAddressField,
+                "Port:", portField
+        };
+        do {
+            incorrectInput = false;
+            int option = JOptionPane.showConfirmDialog(null, message, "Enter IP Address and Port", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null);
+            if (option == JOptionPane.OK_OPTION) {
+                try {
+                    if (ipAddressField.getText().length() < 1 || portField.getText().length() < 1) {
+                        incorrectInput = true;
+                        JOptionPane.showMessageDialog(null, "Write Ip and Port", "Missing Ip or Port", JOptionPane.ERROR_MESSAGE);
+                    } else if (Integer.parseInt(portField.getText()) > 65535) {
+                        incorrectInput = true;
+                        JOptionPane.showMessageDialog(null, "Port must be in range 0 to 65535", "Invalid Port", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            } else {
+                System.exit(0);
+            }
+        } while (incorrectInput);
+        String ipAddress = ipAddressField.getText().strip();
+        String port = portField.getText().strip();
+        write(ipAddress, ipFile);
+        write(port, portFile);
+        return new String[]{ipAddress, port};
+    }
+
+    private void write(String text, String fileName) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(fileName + ".txt"))) {
+            bw.write(text);
+        } catch (IOException e) {
+            System.out.println("Something wrong with the file");
+        }
+    }
+
+    private String read(String fileName) {
+        String read = "";
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName + ".txt"))) {
+            read = br.readLine();
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found");
+        } catch (IOException e) {
+            System.out.println("Something wrong with the file");
+        }
+        return read;
     }
 }

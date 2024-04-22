@@ -102,7 +102,7 @@ public class ClientHandler implements Runnable {
 
     public void kickPlayer() {
         notKicked = false;
-        privateMessage("You've been kicked out", clientUsername, clientUsername);
+        privateMessage("You've been kicked out", clientUsername, "Server");
         broadcastMessage("SERVER: " + clientUsername + " has been kicked out");
 
         clientHandlers.remove(this);

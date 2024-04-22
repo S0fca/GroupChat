@@ -1,10 +1,10 @@
 package server;
 
-import server.commands.Commands;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.InputMismatchException;
+import java.util.Scanner;
 
 public class Server {
 
@@ -17,15 +17,14 @@ public class Server {
     }
 
     public static void main(String[] args) throws IOException {
-        ServerSocket serverSocket = new ServerSocket(1234);
+        int port = getPort();
+        ServerSocket serverSocket = new ServerSocket(port);
         Server server = new Server(serverSocket);
         server.startServer();
     }
 
     private static void startConsole() {
-        new Thread(() -> {
-            console.start();
-        }).start();
+        new Thread(console::start).start();
     }
 
     public void startServer() {
@@ -52,5 +51,22 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static int getPort() {
+        int port;
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Write port: ");
+        try {
+            port = scanner.nextInt();
+            if (port > 65535 || port < 0) {
+                System.out.println("Write correct port.");
+                port = getPort();
+            }
+        } catch (InputMismatchException e) {
+            System.out.println("Write numbers pls");
+            return getPort();
+        }
+        return port;
     }
 }
