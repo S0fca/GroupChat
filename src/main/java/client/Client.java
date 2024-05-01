@@ -1,5 +1,8 @@
 package client;
 
+import common.Message;
+import common.Type;
+
 import java.io.*;
 import java.net.Socket;
 
@@ -29,14 +32,15 @@ public class Client {
 
     public void isNameAvailable() {
         new Thread(() -> {
-            String message;
+            String text;
             try {
-                message = bufferedReader.readLine();
-                if (message.equals("NameTaken")) {
+                text = bufferedReader.readLine();
+
+                if (text.equals("NameTaken")) {
                     chatFrame.nameTakenFrame();
                     Thread.currentThread().interrupt();
                 } else {
-                    chatFrame.writeInMessage(username + " is available :)");
+                    chatFrame.writeInMessage(new Message(username + " is available :)", Type.SERVER_TEXT, "SERVER"));
                     Thread.currentThread().interrupt();
                 }
             } catch (IOException e) {
@@ -47,7 +51,7 @@ public class Client {
 
     public void sendMessages(String messageToSend) {
         try {
-            bufferedWriter.write(username + ": " + messageToSend);
+            bufferedWriter.write(messageToSend);
             bufferedWriter.newLine();
             bufferedWriter.flush();
         } catch (IOException e) {
@@ -67,11 +71,15 @@ public class Client {
 
     public void listenForMessage() {
         new Thread(() -> {
-            String message;
             while (socket.isConnected()) {
+                String text = "";
                 try {
-                    message = bufferedReader.readLine();
-                    chatFrame.writeInMessage(message);
+                    String s;
+                    while (!(s = bufferedReader.readLine()).equals("}")) {
+                        text += s + '\n';
+                    }
+                    text += "}";
+                    chatFrame.writeInMessage(text);
                 } catch (IOException e) {
                     closeEverything(socket, bufferedReader, bufferedWriter);
                 }
@@ -94,5 +102,9 @@ public class Client {
     }
 
     public Client() {
+    }
+
+    public String getUsername() {
+        return username;
     }
 }

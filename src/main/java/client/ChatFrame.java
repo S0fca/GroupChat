@@ -1,5 +1,8 @@
 package client;
 
+import common.Message;
+import common.Type;
+
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Style;
@@ -26,23 +29,24 @@ public class ChatFrame {
         frame.setResizable(false);
         frame.setVisible(true);
 
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.white);
         JPanel textPanel = new JPanel(new BorderLayout());
-        textPanel.add(chat, BorderLayout.LINE_START);
-        chat.setEditable(false);
-        chat.setBorder(BorderFactory.createLineBorder(Color.white, 5));
-
         textPanel.setBackground(Color.white);
         textPanel.setBorder(BorderFactory.createLineBorder(Color.white, 5));
+        textPanel.add(chat, BorderLayout.LINE_START);
+
+        chat.setEditable(false);
+        chat.setBorder(BorderFactory.createLineBorder(Color.white, 5));
+        textField.setBorder(BorderFactory.createLineBorder(Color.lightGray, 2));
 
         JScrollPane scrollBar = new JScrollPane(textPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollBar.setPreferredSize(new Dimension(500, 300));
-        panel.add(scrollBar, BorderLayout.PAGE_START);
-        panel.add(textField, BorderLayout.PAGE_END);
-        textField.setBorder(BorderFactory.createLineBorder(Color.lightGray, 2));
 
-        frame.add(panel);
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(Color.white);
+        mainPanel.add(scrollBar, BorderLayout.PAGE_START);
+        mainPanel.add(textField, BorderLayout.PAGE_END);
+
+        frame.add(mainPanel);
         frame.pack();
     }
 
@@ -67,8 +71,8 @@ public class ChatFrame {
         TextField nameInput = new TextField();
         nameInput.setText(read(usernameFile));
         boolean nameIncorrect;
-
         String username = "";
+
         do {
             nameIncorrect = false;
             int option = JOptionPane.showConfirmDialog(null, nameInput, "Enter your username for the group chat", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null);
@@ -88,18 +92,41 @@ public class ChatFrame {
                 System.exit(0);
             }
         } while (nameIncorrect);
+
         write(username, usernameFile);
         return username;
     }
 
-    public void writeInMessage(String message) {
-        String[] parts = message.split(": ");
-        if (parts.length == 1) {
-            writeInText(message);
-        } else {
-            writeInBoldText(parts[0] + ": ");
-            writeInText(parts[1]);
+    private void sendOutMessage(String messageToSend) {
+        try {
+            doc.insertString(doc.getLength(), messageToSend + '\n', null);
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
         }
+
+        Message message;
+
+        if (messageToSend.charAt(0) == '@') {
+            messageToSend = messageToSend.substring(1);
+            message = new Message(messageToSend.split(" ", 2)[1], Type.PRIVATE_MESSAGE, messageToSend.split(" ", 2)[0], client.getUsername());
+        } else {
+            message = new Message(messageToSend, Type.MESSAGE, client.getUsername());
+        }
+        client.sendMessages(message.toJson());
+    }
+
+    public void writeInMessage(String text) {
+        Message message = Message.fromJson(text);
+        writeInMessage(message);
+    }
+
+    public void writeInMessage(Message message) {
+        if (message.getType() == Type.MESSAGE) {
+            writeInBoldText(message.getSentFrom() + ": ");
+        } else if (message.getType() == Type.PRIVATE_MESSAGE) {
+            writeInBoldText(message.getSentFrom() + " private message: ");
+        }
+        writeInText(message.getText());
     }
 
     private void writeInText(String text) {
@@ -120,57 +147,11 @@ public class ChatFrame {
         }
     }
 
-    private void sendOutMessage(String messageToSend) {
-        try {
-            doc.insertString(doc.getLength(), messageToSend + '\n', null);
-        } catch (BadLocationException e) {
-            throw new RuntimeException(e);
-        }
-        client.sendMessages(messageToSend);
-    }
-
-    public void nameTakenFrame() {
-        frame.setVisible(false);
-        JFrame nameTakenFrame = new JFrame("Name taken");
-        nameTakenFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        nameTakenFrame.setLocationRelativeTo(null);
-        nameTakenFrame.setResizable(false);
-        nameTakenFrame.setVisible(true);
-
-        JLabel label = new JLabel();
-        label.setText("Name taken");
-        label.setBorder(BorderFactory.createLineBorder(nameTakenFrame.getBackground(), 16));
-
-        nameTakenFrame.add(label);
-        nameTakenFrame.pack();
-    }
-
-    public void serverErrorFrame(String message) {
-        JFrame errorFrame = new JFrame(message);
-        errorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        errorFrame.setLocationRelativeTo(null);
-        errorFrame.setResizable(false);
-        errorFrame.setVisible(true);
-
-        JLabel label = new JLabel();
-        label.setText(message);
-        label.setBorder(BorderFactory.createLineBorder(errorFrame.getBackground(), 16));
-
-        errorFrame.add(label);
-        errorFrame.pack();
-    }
-
-    public void setClient(Client client) {
-        this.client = client;
-    }
-
     public String[] getIpPort() {
-        String ipFile = "ipAddress";
-        String portFile = "port";
-        boolean incorrectInput;
-        JTextField ipAddressField = new JTextField();
+        String ipFile = "ipAddress", portFile = "port";
+
+        JTextField ipAddressField = new JTextField(), portField = new JTextField();
         ipAddressField.setText(read(ipFile));
-        JTextField portField = new JTextField();
         portField.setText(read(portFile));
         portField.addKeyListener(new KeyAdapter() {
             @Override
@@ -183,13 +164,17 @@ public class ChatFrame {
                 }
             }
         });
+
         Object[] message = {
                 "IP Address:", ipAddressField,
                 "Port:", portField
         };
+
+        boolean incorrectInput;
         do {
             incorrectInput = false;
             int option = JOptionPane.showConfirmDialog(null, message, "Enter IP Address and Port", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null);
+
             if (option == JOptionPane.OK_OPTION) {
                 try {
                     if (ipAddressField.getText().length() < 1 || portField.getText().length() < 1) {
@@ -205,13 +190,17 @@ public class ChatFrame {
                 System.exit(0);
             }
         } while (incorrectInput);
+
         String ipAddress = ipAddressField.getText().strip();
         String port = portField.getText().strip();
+
         write(ipAddress, ipFile);
         write(port, portFile);
+
         return new String[]{ipAddress, port};
     }
 
+    //region fileWriteRead
     private void write(String text, String fileName) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(fileName + ".txt"))) {
             bw.write(text);
@@ -231,4 +220,32 @@ public class ChatFrame {
         }
         return read;
     }
+//endregion
+
+    //region error frames
+    public void nameTakenFrame() {
+        frame.setVisible(false);
+        serverErrorFrame("Name taken");
+    }
+
+    public void serverErrorFrame(String message) {
+        JFrame errorFrame = new JFrame(message);
+        errorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        errorFrame.setLocationRelativeTo(null);
+        errorFrame.setResizable(false);
+        errorFrame.setVisible(true);
+
+        JLabel label = new JLabel();
+        label.setText(message);
+        label.setBorder(BorderFactory.createLineBorder(errorFrame.getBackground(), 16));
+
+        errorFrame.add(label);
+        errorFrame.pack();
+    }
+//endregion
+
+    public void setClient(Client client) {
+        this.client = client;
+    }
+
 }

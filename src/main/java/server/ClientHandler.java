@@ -1,5 +1,8 @@
 package server;
 
+import common.Message;
+import common.Type;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -29,7 +32,8 @@ public class ClientHandler implements Runnable {
             }
             if (!nameTaken) {
                 clientHandlers.add(this);
-                broadcastMessage("SERVER: " + clientUsername + " has entered the chat!");
+                Message message = new Message(clientUsername + " has entered the chat!", Type.SERVER_TEXT);
+                broadcastMessage(message);
             }
         } catch (IOException e) {
             closeEverything();
@@ -57,11 +61,11 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void broadcastMessage(String messageToSend) {
+    private void broadcastMessage(Message messageToSend) {
         for (ClientHandler clientHandler : clientHandlers) {
             try {
                 if (!clientHandler.equals(this)) {
-                    clientHandler.bufferedWriter.write(messageToSend);
+                    clientHandler.bufferedWriter.write(messageToSend.toJson());
                     clientHandler.bufferedWriter.newLine();
                     clientHandler.bufferedWriter.flush();
                 }
@@ -71,11 +75,11 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void privateMessage(String messageToSend, String sentToUsername, String username) {
+    private void privateMessage(Message message) {
         for (ClientHandler clientHandler : clientHandlers) {
             try {
-                if (clientHandler.clientUsername.equalsIgnoreCase(sentToUsername)) {
-                    clientHandler.bufferedWriter.write(username + " private message: " + messageToSend);
+                if (clientHandler.clientUsername.equalsIgnoreCase(message.getSentTo())) {
+                    clientHandler.bufferedWriter.write(message.toJson());
                     clientHandler.bufferedWriter.newLine();
                     clientHandler.bufferedWriter.flush();
                     break;
@@ -89,7 +93,8 @@ public class ClientHandler implements Runnable {
     private void closeEverything() {
         clientHandlers.remove(this);
         if (!nameTaken && notKicked) {
-            broadcastMessage("SERVER: " + clientUsername + " has left the chat");
+            Message message = new Message(clientUsername + " has left the chat", Type.SERVER_TEXT);
+            broadcastMessage(message);
         }
         try {
             if (bufferedWriter != null) bufferedWriter.close();
@@ -102,8 +107,10 @@ public class ClientHandler implements Runnable {
 
     public void kickPlayer() {
         notKicked = false;
-        privateMessage("You've been kicked out", clientUsername, "Server");
-        broadcastMessage("SERVER: " + clientUsername + " has been kicked out");
+        Message message = new Message(clientUsername + " has been kicked out", Type.SERVER_TEXT);
+        Message privateMessage = new Message("You've been kicked out", Type.PRIVATE_MESSAGE, clientUsername, "SERVER");
+        privateMessage(privateMessage);
+        broadcastMessage(message);
 
         clientHandlers.remove(this);
         try {
@@ -118,18 +125,23 @@ public class ClientHandler implements Runnable {
 
     @Override
     public void run() {
-        String messageFromClient;
         while (socket.isConnected()) {
+            String messageFromClient = "";
+
             try {
-                messageFromClient = bufferedReader.readLine();
-                String[] parts = messageFromClient.split(": ", 2);
-
-                if (parts[1].charAt(0) == '@') {
-                    privateMessage(parts[1].substring(parts[1].indexOf(' ') + 1), parts[1].split(" ")[0].substring(1), parts[0]);
-                } else {
-                    broadcastMessage(messageFromClient);
+                String s;
+                while (!(s = bufferedReader.readLine()).equals("}")) {
+                    messageFromClient += s + '\n';
                 }
+                messageFromClient += "}";
 
+                Message message = Message.fromJson(messageFromClient);
+
+                if (message.getType().equals(Type.PRIVATE_MESSAGE)) {
+                    privateMessage(message);
+                } else if (!message.getType().equals(Type.COMMAND)){
+                    broadcastMessage(message);
+                }
             } catch (IOException e) {
                 closeEverything();
                 break;

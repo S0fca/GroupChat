@@ -9,7 +9,7 @@ import java.util.Scanner;
 public class Server {
 
     private final ServerSocket serverSocket;
-    static Console console = new Console();
+    static final Console console = new Console();
 
 
     public Server(ServerSocket serverSocket) {
