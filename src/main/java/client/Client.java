@@ -81,7 +81,9 @@ public class Client {
                     text += "}";
                     chatFrame.writeInMessage(text);
                 } catch (IOException e) {
+                    chatFrame.serverErrorFrame("Server turned off");
                     closeEverything(socket, bufferedReader, bufferedWriter);
+                    break;
                 }
             }
         }).start();

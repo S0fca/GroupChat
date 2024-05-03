@@ -2,10 +2,14 @@ package server;
 
 import common.Message;
 import common.Type;
+import server.commands.Clients;
+import server.commands.CommandInterface;
+import server.commands.Commands;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ClientHandler implements Runnable {
 
@@ -16,9 +20,10 @@ public class ClientHandler implements Runnable {
     private String clientUsername;
     private boolean nameTaken = false;
     private boolean notKicked = true;
-
+    private final HashMap<String, CommandInterface> map = new HashMap<>();
 
     public ClientHandler(Socket socket) {
+        initialization();
         try {
             this.socket = socket;
             bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
@@ -139,7 +144,14 @@ public class ClientHandler implements Runnable {
 
                 if (message.getType().equals(Type.PRIVATE_MESSAGE)) {
                     privateMessage(message);
-                } else if (!message.getType().equals(Type.COMMAND)){
+                } else if (message.getType().equals(Type.COMMAND)) {
+                    try {
+                        message.setText(map.get(message.getText()).execute());
+                    } catch (NullPointerException e) {
+                        message.setText("Invalid command");
+                    }
+                    privateMessage(message);
+                } else {
                     broadcastMessage(message);
                 }
             } catch (IOException e) {
@@ -147,6 +159,11 @@ public class ClientHandler implements Runnable {
                 break;
             }
         }
+    }
+
+    public void initialization() {
+        map.put("commands", new Commands(map));
+        map.put("clients", new Clients());
     }
 
     public String getClientUsername() {

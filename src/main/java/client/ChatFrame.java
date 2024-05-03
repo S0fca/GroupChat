@@ -105,15 +105,19 @@ public class ChatFrame {
         }
 
         Message message;
-
         if (messageToSend.charAt(0) == '@') {
             messageToSend = messageToSend.substring(1);
             message = new Message(messageToSend.split(" ", 2)[1], Type.PRIVATE_MESSAGE, messageToSend.split(" ", 2)[0], client.getUsername());
+        } else if (messageToSend.charAt(0) == '/') {
+            messageToSend = messageToSend.substring(1).strip();
+            message = new Message(messageToSend, Type.COMMAND, client.getUsername(), client.getUsername());
+            System.out.println(message);
         } else {
             message = new Message(messageToSend, Type.MESSAGE, client.getUsername());
         }
         client.sendMessages(message.toJson());
     }
+
 
     public void writeInMessage(String text) {
         Message message = Message.fromJson(text);
@@ -229,7 +233,7 @@ public class ChatFrame {
     }
 
     public void serverErrorFrame(String message) {
-        JFrame errorFrame = new JFrame(message);
+        JFrame errorFrame = new JFrame();
         errorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         errorFrame.setLocationRelativeTo(null);
         errorFrame.setResizable(false);

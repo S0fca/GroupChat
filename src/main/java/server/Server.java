@@ -9,8 +9,7 @@ import java.util.Scanner;
 public class Server {
 
     private final ServerSocket serverSocket;
-    static final Console console = new Console();
-
+    private static final Console console = new Console();
 
     public Server(ServerSocket serverSocket) {
         this.serverSocket = serverSocket;
@@ -28,7 +27,7 @@ public class Server {
     }
 
     public void startServer() {
-        System.out.println("Server start");
+        System.out.println("Server started");
         startConsole();
         System.out.println("Console started\nWrite \"commands\" to se which commands you can use");
         try {
