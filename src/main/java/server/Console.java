@@ -5,7 +5,7 @@ import server.commands.*;
 import java.util.HashMap;
 import java.util.Scanner;
 
-public class Console {
+public class Console implements Runnable{
 
     private final HashMap<String, CommandInterface> map = new HashMap<>();
 
@@ -25,11 +25,11 @@ public class Console {
         } else System.out.println("Unknown command");
     }
 
-    public void start() {
+    @Override
+    public void run() {
         initialization();
         while (true) {
             execute();
         }
     }
-
 }

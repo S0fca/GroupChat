@@ -6,7 +6,7 @@ import com.google.gson.GsonBuilder;
 public class Message {
 
     private String text;
-    private Type type;
+    private final Type type;
     private String sentTo;
     private String sentFrom;
 
@@ -30,6 +30,25 @@ public class Message {
         this.type = type;
     }
 
+    /**
+     * converts the Message object to json
+     *
+     * @return json message
+     */
+    public String toJson() {
+        return gson.toJson(this);
+    }
+
+    /**
+     * parses a json string representing a Message object and constructs the Message
+     *
+     * @param jsonMessage json string representing the Message object
+     * @return message object parsed from json
+     */
+    public static Message fromJson(String jsonMessage) {
+        return gson.fromJson(jsonMessage, Message.class);
+    }
+
     public String getSentFrom() {
         return sentFrom;
     }
@@ -50,21 +69,4 @@ public class Message {
         this.text = text;
     }
 
-    @Override
-    public String toString() {
-        return "Message{" +
-                "text='" + text + '\'' +
-                ", type=" + type +
-                ", sentTo='" + sentTo + '\'' +
-                ", sentFrom='" + sentFrom + '\'' +
-                '}';
-    }
-
-    public String toJson() {
-        return gson.toJson(this);
-    }
-
-    public static Message fromJson(String json) {
-        return gson.fromJson(json, Message.class);
-    }
 }

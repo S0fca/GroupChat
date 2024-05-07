@@ -16,7 +16,7 @@ public class Kick implements CommandInterface {
             for (ClientHandler clientHandler : ClientHandler.clientHandlers) {
                 if (clientHandler.getClientUsername().equalsIgnoreCase(name)) {
                     clientHandler.kickPlayer();
-                    return "User has been kicked out";
+                    return name + " has been kicked out";
                 }
             }
         } catch (ConcurrentModificationException e) {

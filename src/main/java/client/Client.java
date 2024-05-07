@@ -5,6 +5,7 @@ import common.Type;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Objects;
 
 public class Client {
 
@@ -14,22 +15,30 @@ public class Client {
     private String username;
     private ChatFrame chatFrame;
 
+    /**
+     * constructs a new Client object with the provided socket and username<br>
+     * initializes the client's socket, input and output streams, sets the username<br>
+     * sends the username to the server
+     *
+     * @param socket   connection socket
+     * @param username name to send
+     */
     public Client(Socket socket, String username) {
         try {
             this.socket = socket;
-            setUsername(username);
             this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.username = username;
             sendUsername();
         } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
         }
     }
 
-    public void setUsername(String username) {
-        this.username = String.valueOf(username.charAt(0)).toUpperCase() + username.substring(1);
-    }
-
+    /**
+     * reads message from the server about name availability<br>
+     * informs the user if the name is available
+     */
     public void isNameAvailable() {
         new Thread(() -> {
             String text;
@@ -37,9 +46,10 @@ public class Client {
                 text = bufferedReader.readLine();
 
                 if (text.equals("NameTaken")) {
-                    chatFrame.nameTakenFrame();
+                    chatFrame.serverErrorFrame("Name taken");
                     Thread.currentThread().interrupt();
-                } else {
+                } else if (text.equals("NameAvailable")){
+                    chatFrame.setFrame();
                     chatFrame.writeInMessage(new Message(username + " is available :)", Type.SERVER_TEXT, "SERVER"));
                     Thread.currentThread().interrupt();
                 }
@@ -49,6 +59,11 @@ public class Client {
         }).start();
     }
 
+    /**
+     * sends text to the server
+     *
+     * @param messageToSend text to send to the server
+     */
     public void sendMessages(String messageToSend) {
         try {
             bufferedWriter.write(messageToSend);
@@ -59,6 +74,9 @@ public class Client {
         }
     }
 
+    /**
+     * sends client username to the server
+     */
     private void sendUsername() {
         try {
             bufferedWriter.write(username);
@@ -69,13 +87,17 @@ public class Client {
         }
     }
 
+    /**
+     * starts a new thread that waits for incoming messages in json<br>
+     * calls method to write that message
+     */
     public void listenForMessage() {
         new Thread(() -> {
             while (socket.isConnected()) {
                 String text = "";
                 try {
                     String s;
-                    while (!(s = bufferedReader.readLine()).equals("}")) {
+                    while (!Objects.equals(s = bufferedReader.readLine(), "}")) {
                         text += s + '\n';
                     }
                     text += "}";
@@ -99,14 +121,7 @@ public class Client {
         }
     }
 
-    public void sendFrame(ChatFrame frame) {
+    public void setChatFrame(ChatFrame frame) {
         chatFrame = frame;
-    }
-
-    public Client() {
-    }
-
-    public String getUsername() {
-        return username;
     }
 }

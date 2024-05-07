@@ -18,25 +18,30 @@ public class ClientHandler implements Runnable {
     private BufferedReader bufferedReader;
     private BufferedWriter bufferedWriter;
     private String clientUsername;
-    private boolean nameTaken = false;
     private boolean notKicked = true;
+    private boolean nameTaken = false;
     private final HashMap<String, CommandInterface> map = new HashMap<>();
 
+    /**
+     * sets up the input and output streams for communication<br>
+     * checks if name available<br>
+     * adds client handler<br>
+     * informs everyone a client has connected
+     *
+     * @param socket the socket representing the client's connection
+     */
     public ClientHandler(Socket socket) {
-        initialization();
+        commandsInitialization();
         try {
             this.socket = socket;
             bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            checkNameAvailability(bufferedWriter, bufferedReader);
-            for (ClientHandler clientHandler : clientHandlers) {
-                if (clientHandler.getClientUsername().equals(clientUsername)) {
-                    nameTaken = true;
-                    break;
-                }
-            }
+
+            checkNameAvailability();
+
             if (!nameTaken) {
                 clientHandlers.add(this);
+                System.out.println(clientUsername + " has connected");
                 Message message = new Message(clientUsername + " has entered the chat!", Type.SERVER_TEXT);
                 broadcastMessage(message);
             }
@@ -45,27 +50,32 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void checkNameAvailability(BufferedWriter bufferedWriter, BufferedReader bufferedReader) {
+    /**
+     * checks if name is available
+     * informs the client about it
+     */
+    private void checkNameAvailability() {
         try {
             clientUsername = bufferedReader.readLine();
-            for (ClientHandler client : clientHandlers) {
-                if (client.getClientUsername().equals(clientUsername)) {
-                    bufferedWriter.write("NameTaken");
-                    bufferedWriter.newLine();
-                    bufferedWriter.flush();
-                    return;
-                }
+            nameTaken = clientHandlers.stream().anyMatch(clientHandler -> clientUsername.equals(clientHandler.getClientUsername()));
+
+            if (nameTaken) {
+                bufferedWriter.write("NameTaken");
+            } else {
+                bufferedWriter.write("NameAvailable");
             }
-            bufferedWriter.write("NameAvailable");
             bufferedWriter.newLine();
             bufferedWriter.flush();
-
-            System.out.println(clientUsername + " has connected");
         } catch (IOException e) {
             closeEverything();
         }
     }
 
+    /**
+     * sends a message from a client to all other clients
+     *
+     * @param messageToSend a message from the client
+     */
     private void broadcastMessage(Message messageToSend) {
         for (ClientHandler clientHandler : clientHandlers) {
             try {
@@ -80,11 +90,16 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void privateMessage(Message message) {
+    /**
+     * sends a private message to a client from another client
+     *
+     * @param privateMessage message to send
+     */
+    private void privateMessage(Message privateMessage) {
         for (ClientHandler clientHandler : clientHandlers) {
             try {
-                if (clientHandler.clientUsername.equalsIgnoreCase(message.getSentTo())) {
-                    clientHandler.bufferedWriter.write(message.toJson());
+                if (clientHandler.clientUsername.equalsIgnoreCase(privateMessage.getSentTo())) {
+                    clientHandler.bufferedWriter.write(privateMessage.toJson());
                     clientHandler.bufferedWriter.newLine();
                     clientHandler.bufferedWriter.flush();
                     break;
@@ -97,7 +112,7 @@ public class ClientHandler implements Runnable {
 
     private void closeEverything() {
         clientHandlers.remove(this);
-        if (!nameTaken && notKicked) {
+        if (notKicked && !nameTaken) {
             Message message = new Message(clientUsername + " has left the chat", Type.SERVER_TEXT);
             broadcastMessage(message);
         }
@@ -110,6 +125,10 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * informs all clients that this client was kicked out<br>
+     * tells the client they've been kicked out and removes this ClientHandler from the list
+     */
     public void kickPlayer() {
         notKicked = false;
         Message message = new Message(clientUsername + " has been kicked out", Type.SERVER_TEXT);
@@ -127,7 +146,10 @@ public class ClientHandler implements Runnable {
         }
     }
 
-
+    /**
+     * waits for Messages in json, parses them into a Message object <br>
+     * processes the message
+     */
     @Override
     public void run() {
         while (socket.isConnected()) {
@@ -142,17 +164,17 @@ public class ClientHandler implements Runnable {
 
                 Message message = Message.fromJson(messageFromClient);
 
-                if (message.getType().equals(Type.PRIVATE_MESSAGE)) {
-                    privateMessage(message);
-                } else if (message.getType().equals(Type.COMMAND)) {
-                    try {
-                        message.setText(map.get(message.getText()).execute());
-                    } catch (NullPointerException e) {
-                        message.setText("Invalid command");
+                switch (message.getType()) {
+                    case PRIVATE_MESSAGE -> privateMessage(message);
+                    case COMMAND -> {
+                        try {
+                            message.setText(map.get(message.getText()).execute());
+                        } catch (NullPointerException e) {
+                            message.setText("Invalid command");
+                        }
+                        privateMessage(message);
                     }
-                    privateMessage(message);
-                } else {
-                    broadcastMessage(message);
+                    default -> broadcastMessage(message);
                 }
             } catch (IOException e) {
                 closeEverything();
@@ -161,7 +183,10 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public void initialization() {
+    /**
+     * initializes client commands
+     */
+    public void commandsInitialization() {
         map.put("commands", new Commands(map));
         map.put("clients", new Clients());
     }

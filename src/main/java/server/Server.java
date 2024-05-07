@@ -23,7 +23,7 @@ public class Server {
     }
 
     private static void startConsole() {
-        new Thread(console::start).start();
+        new Thread(console).start();
     }
 
     public void startServer() {
@@ -52,6 +52,11 @@ public class Server {
         }
     }
 
+    /**
+     * gets a valid port number (0 to 65535) and returns the entered value<br>
+     *
+     * @return port number entered by the user
+     */
     private static int getPort() {
         int port;
         Scanner scanner = new Scanner(System.in);

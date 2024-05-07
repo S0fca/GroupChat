@@ -15,15 +15,17 @@ import java.io.*;
 
 public class ChatFrame {
 
-    private JFrame frame;
+    String clientUsername = "";
     private final JTextPane chat = new JTextPane();
     private final JTextField textField = new JTextField();
-    private Client client = new Client();
+    private Client client;
     private final StyledDocument doc = chat.getStyledDocument();
 
-
+    /**
+     * adds components to the frame
+     */
     public void setFrame() {
-        frame = new JFrame("GroupChat");
+        JFrame frame = new JFrame("GroupChat");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
         frame.setResizable(false);
@@ -46,14 +48,17 @@ public class ChatFrame {
         mainPanel.add(scrollBar, BorderLayout.PAGE_START);
         mainPanel.add(textField, BorderLayout.PAGE_END);
 
+        setChatPanel();
         frame.add(mainPanel);
         frame.pack();
     }
 
+    /**
+     * calls method from client to check name availability<br>
+     * sets up the group chat
+     */
     public void setChatPanel() {
-        client.isNameAvailable();
-
-        writeInBoldText("Welcome to the group chat!\n");
+        writeInBoldText("Welcome to the group chat!\nWrite \"/commands\" to see all commands");
         textField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -66,25 +71,31 @@ public class ChatFrame {
         });
     }
 
+    /**
+     * gets the username from client using JOptionPane<br>
+     * loads last used name from file<br>
+     * writes the name in a file
+     *
+     * @return client username
+     */
     public String getName() {
         String usernameFile = "username";
         TextField nameInput = new TextField();
         nameInput.setText(read(usernameFile));
         boolean nameIncorrect;
-        String username = "";
 
         do {
             nameIncorrect = false;
             int option = JOptionPane.showConfirmDialog(null, nameInput, "Enter your username for the group chat", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null);
             if (option == JOptionPane.OK_OPTION) {
 
-                username = nameInput.getText().strip();
+                clientUsername = nameInput.getText().strip();
 
-                if (username.length() < 2) {
+                if (clientUsername.length() < 2) {
                     nameIncorrect = true;
                     JOptionPane.showMessageDialog(null, "Name must be at least 2 characters long", "Invalid Username", JOptionPane.ERROR_MESSAGE);
                 }
-                if (username.contains("\s")) {
+                if (clientUsername.contains("\s")) {
                     nameIncorrect = true;
                     JOptionPane.showMessageDialog(null, "Name cannot include whitespace", "Invalid Username", JOptionPane.ERROR_MESSAGE);
                 }
@@ -93,37 +104,51 @@ public class ChatFrame {
             }
         } while (nameIncorrect);
 
-        write(username, usernameFile);
-        return username;
+        write(clientUsername, usernameFile);
+        clientUsername = String.valueOf(clientUsername.charAt(0)).toUpperCase() + clientUsername.substring(1);
+        return clientUsername;
     }
 
+    /**
+     * writes in the text and sends a Message to the server
+     *
+     * @param messageToSend Message to send from the client
+     */
     private void sendOutMessage(String messageToSend) {
-        try {
-            doc.insertString(doc.getLength(), messageToSend + '\n', null);
-        } catch (BadLocationException e) {
-            throw new RuntimeException(e);
-        }
+        writeInText(messageToSend);
 
         Message message;
-        if (messageToSend.charAt(0) == '@') {
-            messageToSend = messageToSend.substring(1);
-            message = new Message(messageToSend.split(" ", 2)[1], Type.PRIVATE_MESSAGE, messageToSend.split(" ", 2)[0], client.getUsername());
-        } else if (messageToSend.charAt(0) == '/') {
-            messageToSend = messageToSend.substring(1).strip();
-            message = new Message(messageToSend, Type.COMMAND, client.getUsername(), client.getUsername());
-            System.out.println(message);
-        } else {
-            message = new Message(messageToSend, Type.MESSAGE, client.getUsername());
+        switch (messageToSend.charAt(0)) {
+            case '@' -> {
+                messageToSend = messageToSend.substring(1);
+                message = new Message(messageToSend.split(" ", 2)[1], Type.PRIVATE_MESSAGE, messageToSend.split(" ", 2)[0], clientUsername);
+            }
+            case '/' -> {
+                messageToSend = messageToSend.substring(1).strip();
+                message = new Message(messageToSend, Type.COMMAND, clientUsername, clientUsername);
+                System.out.println(message);
+            }
+            default -> message = new Message(messageToSend, Type.MESSAGE, clientUsername);
         }
         client.sendMessages(message.toJson());
     }
 
-
+    /**
+     * converts message in json to Message object<br>
+     * writes int the message
+     *
+     * @param text message in json
+     */
     public void writeInMessage(String text) {
         Message message = Message.fromJson(text);
         writeInMessage(message);
     }
 
+    /**
+     * writes in a message from another client
+     *
+     * @param message message from another client
+     */
     public void writeInMessage(Message message) {
         if (message.getType() == Type.MESSAGE) {
             writeInBoldText(message.getSentFrom() + ": ");
@@ -133,6 +158,11 @@ public class ChatFrame {
         writeInText(message.getText());
     }
 
+    /**
+     * writes in a basic text
+     *
+     * @param text text to write in
+     */
     private void writeInText(String text) {
         try {
             doc.insertString(doc.getLength(), text + '\n', null);
@@ -141,6 +171,11 @@ public class ChatFrame {
         }
     }
 
+    /**
+     * writes in a text in bold
+     *
+     * @param text text to write in bold
+     */
     private void writeInBoldText(String text) {
         Style style = chat.addStyle("Style", null);
         StyleConstants.setBold(style, true);
@@ -151,6 +186,15 @@ public class ChatFrame {
         }
     }
 
+    /**
+     * gets the ip address and port from the client using JOptionPane<br>
+     * loads last used ip and port<br>
+     * saves ip and port to files<br>
+     *
+     * @return a String[]<br>
+     * [0] = ip address<br>
+     * [1] = port
+     */
     public String[] getIpPort() {
         String ipFile = "ipAddress", portFile = "port";
 
@@ -205,6 +249,13 @@ public class ChatFrame {
     }
 
     //region fileWriteRead
+
+    /**
+     * writes text in to a file
+     *
+     * @param text     text to write
+     * @param fileName name of the file
+     */
     private void write(String text, String fileName) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(fileName + ".txt"))) {
             bw.write(text);
@@ -213,6 +264,12 @@ public class ChatFrame {
         }
     }
 
+    /**
+     * reads text from a file
+     *
+     * @param fileName file to read text from
+     * @return text from file
+     */
     private String read(String fileName) {
         String read = "";
         try (BufferedReader br = new BufferedReader(new FileReader(fileName + ".txt"))) {
@@ -226,12 +283,12 @@ public class ChatFrame {
     }
 //endregion
 
-    //region error frames
-    public void nameTakenFrame() {
-        frame.setVisible(false);
-        serverErrorFrame("Name taken");
-    }
 
+    /**
+     * makes a frame that shows an error
+     *
+     * @param message server error message
+     */
     public void serverErrorFrame(String message) {
         JFrame errorFrame = new JFrame();
         errorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -246,7 +303,6 @@ public class ChatFrame {
         errorFrame.add(label);
         errorFrame.pack();
     }
-//endregion
 
     public void setClient(Client client) {
         this.client = client;
