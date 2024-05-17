@@ -39,7 +39,7 @@ public class ClientHandler implements Runnable {
 
             checkNameAvailability();
 
-            if (!nameTaken) {
+            if (!nameTaken && (clientUsername != null)) {
                 clientHandlers.add(this);
                 System.out.println(clientUsername + " has connected");
                 Message message = new Message(clientUsername + " has entered the chat!", Type.SERVER_TEXT);
@@ -112,7 +112,7 @@ public class ClientHandler implements Runnable {
 
     private void closeEverything() {
         clientHandlers.remove(this);
-        if (notKicked && !nameTaken) {
+        if (notKicked && !nameTaken && clientUsername != null) {
             Message message = new Message(clientUsername + " has left the chat", Type.SERVER_TEXT);
             broadcastMessage(message);
         }
@@ -194,5 +194,14 @@ public class ClientHandler implements Runnable {
     public String getClientUsername() {
         return clientUsername;
     }
-
 }
+
+
+
+
+
+
+
+
+
+

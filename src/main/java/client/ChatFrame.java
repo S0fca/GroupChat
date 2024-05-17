@@ -58,7 +58,7 @@ public class ChatFrame {
      * sets up the group chat
      */
     public void setChatPanel() {
-        writeInBoldText("Welcome to the group chat!\nWrite \"/commands\" to see all commands");
+        writeInBoldText("Welcome to the group chat!\nWrite \"/commands\" to see all commands\n");
         textField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -115,6 +115,7 @@ public class ChatFrame {
      * @param messageToSend Message to send from the client
      */
     private void sendOutMessage(String messageToSend) {
+        messageToSend = messageToSend.strip();
         writeInText(messageToSend);
 
         Message message;
@@ -126,7 +127,6 @@ public class ChatFrame {
             case '/' -> {
                 messageToSend = messageToSend.substring(1).strip();
                 message = new Message(messageToSend, Type.COMMAND, clientUsername, clientUsername);
-                System.out.println(message);
             }
             default -> message = new Message(messageToSend, Type.MESSAGE, clientUsername);
         }
@@ -200,7 +200,14 @@ public class ChatFrame {
 
         JTextField ipAddressField = new JTextField(), portField = new JTextField();
         ipAddressField.setText(read(ipFile));
-        portField.setText(read(portFile));
+        String filePort = read(portFile);
+        try {
+            Integer.parseInt(filePort);
+            portField.setText(filePort);
+        }catch (NumberFormatException ignored){
+        }
+
+
         portField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -232,6 +239,7 @@ public class ChatFrame {
                         incorrectInput = true;
                         JOptionPane.showMessageDialog(null, "Port must be in range 0 to 65535", "Invalid Port", JOptionPane.ERROR_MESSAGE);
                     }
+
                 } catch (NumberFormatException ignored) {
                 }
             } else {
@@ -281,8 +289,7 @@ public class ChatFrame {
         }
         return read;
     }
-//endregion
-
+    //endregion
 
     /**
      * makes a frame that shows an error

@@ -12,6 +12,14 @@ public class Message {
 
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
+    /**
+     * Constructs a message object
+     *
+     * @param text     text of the message
+     * @param type     type of the message
+     * @param sentTo   recipient
+     * @param sentFrom sender
+     */
     public Message(String text, Type type, String sentTo, String sentFrom) {
         this.text = text;
         this.type = type;
@@ -19,12 +27,25 @@ public class Message {
         this.sentFrom = sentFrom;
     }
 
+    /**
+     * Constructs a message object
+     *
+     * @param text     text of the message
+     * @param type     type of the message
+     * @param sentFrom sender
+     */
     public Message(String text, Type type, String sentFrom) {
         this.text = text;
         this.type = type;
         this.sentFrom = sentFrom;
     }
 
+    /**
+     * Constructs a message object
+     *
+     * @param text text of the message
+     * @param type type of the message
+     */
     public Message(String text, Type type) {
         this.text = text;
         this.type = type;
@@ -69,4 +90,13 @@ public class Message {
         this.text = text;
     }
 
+    @Override
+    public String toString() {
+        return "Message{" +
+                "text='" + text + '\'' +
+                ", type=" + type +
+                ", sentTo='" + sentTo + '\'' +
+                ", sentFrom='" + sentFrom + '\'' +
+                '}';
+    }
 }
