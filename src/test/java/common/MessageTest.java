@@ -1,24 +1,30 @@
 package common;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import org.json.JSONException;
+import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MessageTest {
+    final Message message = new Message("text", Type.MESSAGE, "user");
+    private final String messageJSON = """
+                {
+                    sentFrom: "user",
+                    text: "text",
+                    type: "MESSAGE"
+                }
+                """;
 
-    Message message = new Message("text", Type.MESSAGE, "user");
-
-    @org.junit.jupiter.api.Test
-    void toJson() {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        assertEquals(gson.toJson(message, Message.class), message.toJson());
+    @Test
+    void toJson() throws JSONException {
+        String actual = message.toJson();
+        JSONAssert.assertEquals(messageJSON, actual, true);
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void fromJson() {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        String messageJson = gson.toJson(message);
-        assertEquals(message.toString(), message.fromJson(messageJson).toString());
+        Message actual = Message.fromJson(messageJSON);
+        assertEquals(message, actual);
     }
 }

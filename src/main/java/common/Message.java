@@ -3,6 +3,8 @@ package common;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.util.Objects;
+
 public class Message {
 
     private String text;
@@ -98,5 +100,18 @@ public class Message {
                 ", sentTo='" + sentTo + '\'' +
                 ", sentFrom='" + sentFrom + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Message message = (Message) o;
+        return text.equals(message.text) && type == message.type && Objects.equals(sentTo, message.sentTo) && Objects.equals(sentFrom, message.sentFrom);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(text, type, sentTo, sentFrom);
     }
 }
