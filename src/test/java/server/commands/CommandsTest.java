@@ -1,6 +1,6 @@
 package server.commands;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -10,10 +10,10 @@ import static org.mockito.Mockito.mock;
 
 class CommandsTest {
 
-    private Commands commands;
+    private static Commands commands;
 
-    @Before
-    public void before() {
+    @BeforeAll
+    public static void beforeAll() {
         HashMap<String, CommandInterface> commandMap = new HashMap<>();
         commandMap.put("command1", mock(CommandInterface.class));
         commandMap.put("command2", mock(CommandInterface.class));
@@ -27,7 +27,6 @@ class CommandsTest {
         String actual = commands.execute();
 
         String expected = "command1\ncommand2\ncommand3";
-
         assertEquals(expected, actual);
     }
 }

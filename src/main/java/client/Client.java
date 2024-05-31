@@ -2,6 +2,7 @@ package client;
 
 import common.Message;
 import common.Type;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.*;
 import java.net.Socket;
@@ -77,7 +78,8 @@ public class Client {
     /**
      * sends client username to the server
      */
-    private void sendUsername() {
+    @VisibleForTesting
+    protected void sendUsername() {
         try {
             bufferedWriter.write(username);
             bufferedWriter.newLine();
