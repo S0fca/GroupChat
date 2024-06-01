@@ -81,7 +81,7 @@
                                     <mainClass>client.ClientMain</mainClass>
                                 </manifest>
                             </archive>
-                            <finalName>client.jar</finalName>
+                            <finalName>client</finalName>
                         </configuration>
                     </execution>
                     <execution>
@@ -96,7 +96,7 @@
                                     <mainClass>server.Server</mainClass>
                                 </manifest>
                             </archive>
-                            <finalName>server.jar</finalName>
+                            <finalName>server</finalName>
                         </configuration>
                     </execution>
                 </executions>
